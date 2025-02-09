@@ -1,0 +1,15 @@
+/*
+!.gitignore
+!/script/
+*.out/
+WIP/
+*~
+*.swp
+.DS_Store
+a.out
+*30_CS.sh
+.$*.drawio.*
+.#*
+*#
+*.bk
+__pycache__
