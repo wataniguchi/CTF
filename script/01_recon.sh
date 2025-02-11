@@ -58,7 +58,9 @@ touch_dir() {
 scan_host() {
   wait_until_jobn_lt "$MAX_JOBS"
   message "scanning ports on $1"
-  rustscan --ulimit 5000 -a "$1" > "${DIR_WRITE}"/rustscan-"$1".txt &
+  rustscan --ulimit 5000 --greppable -a "$1" |\
+    awk -F' -> |[][]' '{print "nmap -T4 -A --reason -p", $3, $1}' |\
+    /bin/sh > "${DIR_WRITE}"/rustscan-"$1".txt &
 }
 
 if [ "$#" -ne 1 ]; then
@@ -97,6 +99,6 @@ else
 fi
 
 wait_background
-grep "Discovered" "${DIR_WRITE}"/rustscan-*.txt > "${DIR_WRITE}"/All_discovered_ports.txt
+grep -E '^[^ ]+ +open ' "${DIR_WRITE}"/rustscan-*.txt > "${DIR_WRITE}"/All_discovered_ports.txt
 message "completed"
 exit 0
