@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 DIR_WRITE="portscan.out"
-MAX_JOBS=8
+MAX_JOBS=4
 
 trap 'kill_background > /dev/null 2>&1' EXIT
 

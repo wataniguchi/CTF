@@ -1,0 +1,21 @@
+
+$ sudo docker run \
+  --log-driver=syslog \
+  --log-opt syslog-address=udp://loghost:514 \
+  -it --name "$NAME_CONTAINER" "$NAME_IMAGE" \
+  /bin/bash
+
+
+
+docker-compose.yml
+
+version: '3'
+services:
+  sample-container:
+    image: sample-image
+    logging:
+      driver: syslog
+      options:
+        syslog-address: udp://loghost:514
+
+
