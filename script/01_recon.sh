@@ -56,11 +56,14 @@ touch_dir() {
 }
 
 scan_host() {
-  wait_until_jobn_lt "$MAX_JOBS"
   message "scanning ports on $1"
-  rustscan --ulimit 5000 --greppable -a "$1" |\
-    awk -F' -> |[][]' '{print "nmap -T4 -A --reason -p", $3, $1}' |\
-    /bin/sh > "${DIR_WRITE}"/rustscan-"$1".txt &
+  RUSTSCAN_OUT=$(rustscan --ulimit 5000 --greppable -a "$1")
+  if echo "$RUSTSCAN_OUT" | grep ' -> ' 2>&1 >/dev/null; then
+    message "$RUSTSCAN_OUT"
+    echo "$RUSTSCAN_OUT" |\
+      awk -F' -> |[][]' '{print "nmap -sV -A --reason -p", $3, $1}' |\
+      /bin/sh > "${DIR_WRITE}"/rustscan-"$1".txt
+  fi
 }
 
 if [ "$#" -ne 1 ]; then
@@ -94,11 +97,13 @@ else
   # Enumerate all IPs in range
   for ((A = "$ADDR_MIN"; A <= "$ADDR_MAX"; A++)) ; do
     HOST=$(printf "%d.%d.%d.%d\n" $(( ("$A" >> 24) & 255 )) $(( ("$A" >> 16) & 255 )) $(( ("$A" >> 8) & 255 )) $(( "$A" & 255 )))
-    scan_host $HOST
+    wait_until_jobn_lt "$MAX_JOBS"
+    scan_host $HOST &
   done
 fi
 
 wait_background
-grep -E '^[^ ]+ +open ' "${DIR_WRITE}"/rustscan-*.txt > "${DIR_WRITE}"/All_discovered_ports.txt
+grep -E '^[^ ]+ +open ' "${DIR_WRITE}"/rustscan-*.txt 2>/dev/null \
+  > "${DIR_WRITE}"/All_discovered_ports.txt
 message "completed"
 exit 0
