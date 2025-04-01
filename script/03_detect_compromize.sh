@@ -11,6 +11,7 @@ FLAG_REGEX="a2dis[a-z]+d"
 DIR_WRITE="pcap.out"
 PCAP_PREFIX="capture"
 STREAM_PREFIX="stream"
+COMPROMIZE_PREFIX="compromize"
 
 # Time duration to rotate the dump file (in seconds)
 ROTATE_SEC=60
@@ -60,7 +61,11 @@ process_stream_dump(){
     #tshark -r $1 -T fields -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport
     if tshark -r $1 -Y "ip.src eq $IP_LOCAL" -V | grep -qE $FLAG_REGEX; then
       IP_REMOTE=$(tshark -r $1 -Y "ip.src eq $IP_LOCAL" -T fields -e ip.dst | uniq)
-      message "=== FLAG COMPROMIZED to $IP_REMOTE ===: $1"
+      PORT_LOCAL=$(tshark -r $1 -Y "ip.src eq $IP_LOCAL" -T fields -e tcp.srcport | uniq)
+      COMPROMIZE_DUMP=$(echo $1 | sed -E s/${STREAM_PREFIX}-/${COMPROMIZE_PREFIX}-${PORT_LOCAL}_/)
+      message "=== FLAG COMPROMIZED to $IP_REMOTE"
+      mv $1 $COMPROMIZE_DUMP
+      message "=== stream dump kept as: $COMPROMIZE_DUMP"
     else
       rm $1
       message "deleted: $1"
