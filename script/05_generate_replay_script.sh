@@ -21,8 +21,9 @@ RECORD_PREFIX="record"
 PROMPT_PREFIX="prompt"
 REPLAY_PREFIX="replay"
 
-# Prompt template for ChatGPT
-PROMPT_TEMPLATE="05_prompt.txt"
+# Prompt for ChatGPT
+PROMPT_TEMPLATE="05_prompt_user.txt"
+PROMPT_SYSTEM="05_prompt_system.txt"
 
 # How often to check for new files (in seconds)
 CHECK_INTERVAL=60
@@ -179,12 +180,13 @@ while true; do
 
       generate_prompt ${COMMAND_DIR}/${PROMPT_TEMPLATE} $RECORD $PROMPT
       message "ChatGPT prompt generated: $PROMPT"
+      rm $RECORD
 
       if [ ! -z "$OPENAI_KEY" ]; then
         # 1. Extract only Python code part from ChatGPT response
         # 2. Fix up code ChatGPT generated, first by replacing newlines literally embedded in strings with escaped ASCII sequence...
         # 3. Then, second by removing newlines within double quotes
-        cat $PROMPT | ${GPT_CLI_DIR}/${GPT_CLI_BASE} -m gpt-4-turbo \
+        cat $PROMPT | ${GPT_CLI_DIR}/${GPT_CLI_BASE} -m gpt-4-turbo -i ${COMMAND_DIR}/${PROMPT_SYSTEM} \
           | awk '/^```python$/{flag=1; next} /^```$/{flag=0} flag' \
           | perl -0777 -pne 's/\r\n(?=\")/\\r\\n/g' \
           | perl -0777 -pne 's/\n(?=\")/\\n/g' \
