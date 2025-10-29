@@ -1,6 +1,7 @@
 *.config/
 *.out/
 WIP/
+venv_*/
 *~
 *.swp
 .DS_Store

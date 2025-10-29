@@ -106,7 +106,7 @@ format_breach(){
 
 generate_prompt(){
   # Start with the body of the prompt
-  cat $1 | sed s/\$FLAG_REGEX/\"$FLAG_REGEX\"/ > $3
+  cat $1 | sed s/\$FLAG_REGEX/\"$FLAG_REGEX\"/g > $3
   # Append the recorded TCP stream
   cat $2 >> $3
   # Unquote the TCP stream part
