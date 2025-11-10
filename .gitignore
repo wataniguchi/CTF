@@ -1,5 +1,6 @@
 *.config/
 *.out/
+*.work/
 WIP/
 venv_*/
 *~
