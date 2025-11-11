@@ -15,7 +15,7 @@ readonly IMAGE_NAME="playground_node_js"
 readonly CONTAINER_NAME="node_sandbox"
 
 # Default host source directory (relative to script location)
-readonly DEFAULT_HOST_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/node.work"
+readonly DEFAULT_HOST_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/node_src"
 
 # --------------------------------------------------------------------
 # Helper functions for prefixed output

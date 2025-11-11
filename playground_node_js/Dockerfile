@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:23.6-slim
 
 # Install system packages
 RUN apt-get update && apt-get install -y \
