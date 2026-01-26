@@ -1,4 +1,5 @@
 *.config/
+*.in/
 *.out/
 *.work/
 WIP/
