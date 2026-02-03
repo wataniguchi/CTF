@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import argparse
 from typing import Optional
+import os
 
 # ------------------------------------------------------------
 # 3rd-party imports
@@ -36,8 +37,16 @@ BASE_PROLOGUE = (
     "suggest improvements step by step, first in English then in Japanese:"
     "1) Is it written in clear and unambiguous language to describe the situation?"
     "2) Are information pieces consistent across the report?"
+    "3) Are there any logical gaps or missing information that should be included?"
+    "4) Does it follow standard military reporting formats and conventions?"
+    "5) Are they aligned with the reference documents provided?"
+    "   If not, point out discrepancies with a pointer to the relevant section."
+    "6) Provide a summary of key findings and recommended actions."
 )
 
+DIR_REFERENCE = "./md.out"
+REFERENCE1_FILE = "NATO-AJP-10-EditionA-V1E-2023.md"
+REFERENCE2_FILE = "NATO-AJP-10.1_EditionA-V1E-2023.md"
 
 def render_with_rich(md_text: str, structured_blocks=None):
     """
@@ -149,6 +158,23 @@ def main() -> None:
     parts.append(report_content)
     parts.append("```")
     parts.append("--- END DRAFT SITREP ---\n")
+
+    ref1_content = read_file_content(os.path.join(DIR_REFERENCE, REFERENCE1_FILE))
+    print(f"[+] Read reference document 1 from: {os.path.join(DIR_REFERENCE, REFERENCE1_FILE)}\n")
+    ref2_content = read_file_content(os.path.join(DIR_REFERENCE, REFERENCE2_FILE))
+    print(f"[+] Read reference document 2 from: {os.path.join(DIR_REFERENCE, REFERENCE2_FILE)}\n")
+
+    parts.append("--- START REFERENCE 1 ---\n")
+    parts.append("```markdown")
+    parts.append(ref1_content)
+    parts.append("```")
+    parts.append("--- END REFERENCE 1 ---\n")
+
+    parts.append("--- START REFERENCE 2 ---\n")
+    parts.append("```markdown")
+    parts.append(ref2_content)
+    parts.append("```")
+    parts.append("--- END REFERENCE 2 ---\n")
 
     prompt = "\n".join(parts)
         
